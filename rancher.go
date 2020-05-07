@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -29,6 +30,7 @@ type RancherTarget struct {
 }
 
 func (r *Rancher) ListAutoPromServices() ([]*RancherTarget, error) {
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	projectId, err := r.getProjectId()
 	if err != nil {
 		return nil, err
