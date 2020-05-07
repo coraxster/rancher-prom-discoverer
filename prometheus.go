@@ -38,6 +38,8 @@ type PromTarget struct {
 
 func rancher2PromTarget(rt *RancherTarget) *PromTarget {
 	rt.Labels["hostname"] = rt.Host
+	rt.Labels["stack"] = rt.Stack
+	rt.Labels["service"] = rt.Service
 	return &PromTarget{
 		Targets: []string{rt.Target},
 		Labels:  rt.Labels,
