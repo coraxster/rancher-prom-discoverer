@@ -47,7 +47,7 @@ func formatPromUrl(ip string, port int, endpoint string) string {
 	return fmt.Sprintf(promUri, ip, port, endpoint)
 }
 
-func (r *Rancher) makeRequest(url string) (*http.Response, error) {
+func (r *Rancher) doRequest(url string) (*http.Response, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -57,10 +57,11 @@ func (r *Rancher) makeRequest(url string) (*http.Response, error) {
 }
 
 func (r *Rancher) getProjectId() (string, error) {
-	resp, err := r.makeRequest(fmt.Sprintf(rancherFindProjectIdQuery, r.host, r.project))
+	resp, err := r.doRequest(fmt.Sprintf(rancherFindProjectIdQuery, r.host, r.project))
 	if err != nil {
 		return "", err
 	}
+	defer resp.Body.Close()
 	projectResp := struct {
 		Type    string
 		Message string
@@ -84,10 +85,11 @@ func (r *Rancher) getProjectId() (string, error) {
 }
 
 func (r *Rancher) getRancherTargets(projectId string) ([]*RancherTarget, error) {
-	resp, err := r.makeRequest(fmt.Sprintf("https://%s/v2-beta/projects/%s/services", r.host, projectId))
+	resp, err := r.doRequest(fmt.Sprintf("https://%s/v2-beta/projects/%s/services", r.host, projectId))
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 	servicesResp := struct {
 		Type    string
 		Message string
@@ -142,10 +144,11 @@ func (r *Rancher) getRancherTargets(projectId string) ([]*RancherTarget, error) 
 }
 
 func (r *Rancher) getStackName(stackLink string) (string, error) {
-	resp, err := r.makeRequest(stackLink)
+	resp, err := r.doRequest(stackLink)
 	if err != nil {
 		return "", err
 	}
+	defer resp.Body.Close()
 	stackResp := struct {
 		Name string
 	}{}
@@ -160,6 +163,7 @@ func checkPromUrl(url string) error {
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		return errors.New("not 200 code")
 	}
@@ -173,6 +177,9 @@ func parseLabels(labels map[string]string) map[string]string {
 			continue
 		}
 		k = strings.TrimPrefix(k, autoPromLabelsPrefix)
+		if k == "" {
+			continue
+		}
 		result[k] = v
 	}
 	return result
