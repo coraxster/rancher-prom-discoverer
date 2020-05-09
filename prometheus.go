@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"reflect"
 )
 
 type TargetWriter struct {
-	filepath string
+	filepath    string
+	lastWritten []*RancherTarget
 }
 
 func NewTargetWriter(filepath string) *TargetWriter {
@@ -15,6 +17,10 @@ func NewTargetWriter(filepath string) *TargetWriter {
 }
 
 func (tw *TargetWriter) Write(rancherTargets []*RancherTarget) error {
+	if reflect.DeepEqual(rancherTargets, tw.lastWritten) {
+		log.Println("[INFO] not changed")
+		return nil
+	}
 	promoTargets := make([]*PromTarget, 0, len(rancherTargets))
 	for _, rt := range rancherTargets {
 		promoTargets = append(promoTargets, rancher2PromTarget(rt))
@@ -27,6 +33,7 @@ func (tw *TargetWriter) Write(rancherTargets []*RancherTarget) error {
 	if err != nil {
 		return err
 	}
+	tw.lastWritten = rancherTargets
 	log.Println("[INFO] file written")
 	return nil
 }

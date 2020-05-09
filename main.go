@@ -2,9 +2,7 @@ package main
 
 import (
 	"github.com/getsentry/sentry-go"
-	"log"
 	"os"
-	"reflect"
 	"strconv"
 	"time"
 )
@@ -23,7 +21,6 @@ func main() {
 	rancher := NewRancher(host, token, project)
 	writer := NewTargetWriter(filepath)
 
-	var last []*RancherTarget
 	for {
 		targets, err := rancher.ListAutoPromServices()
 		if err != nil {
@@ -32,15 +29,10 @@ func main() {
 			time.Sleep(period)
 			continue
 		}
-		if reflect.DeepEqual(last, targets) {
-			log.Println("[INFO] not changed")
-		} else {
-			err = writer.Write(targets)
-			if err != nil {
-				os.Stderr.WriteString("[ERROR] write file error: " + err.Error())
-				sentry.CaptureException(err)
-			}
-			last = targets
+		err = writer.Write(targets)
+		if err != nil {
+			os.Stderr.WriteString("[ERROR] write file error: " + err.Error())
+			sentry.CaptureException(err)
 		}
 		time.Sleep(period)
 	}
@@ -49,7 +41,7 @@ func main() {
 func initSentry(dsn string) {
 	err := sentry.Init(sentry.ClientOptions{
 		Dsn:   dsn,
-		Debug: true,
+		Debug: false,
 	})
 	if err != nil {
 		os.Stderr.WriteString("[ERROR] init sentry error: " + err.Error())
