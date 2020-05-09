@@ -116,9 +116,6 @@ func (r *Rancher) getRancherTargets(projectId string) ([]*RancherTarget, error) 
 		if !ok {
 			continue
 		}
-		if strings.ToLower(promEndpoint) == "true" || promEndpoint == "1" {
-			promEndpoint = "/metrics"
-		}
 		for _, publicEndpoint := range d.PublicEndpoints {
 			promUrl := formatPromUrl(publicEndpoint.IpAddress, publicEndpoint.Port, promEndpoint)
 			if err := checkPromUrl(promUrl); err != nil {
