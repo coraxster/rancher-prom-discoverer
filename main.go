@@ -2,7 +2,9 @@ package main
 
 import (
 	"github.com/getsentry/sentry-go"
+	"log"
 	"os"
+	"reflect"
 	"strconv"
 	"time"
 )
@@ -12,7 +14,7 @@ func main() {
 	token := os.Getenv("RANCHER_TOKEN")
 	project := os.Getenv("RANCHER_PROJECT")
 	filepath := os.Getenv("FILE")
-	period := time.Minute
+	period := 60 * time.Second
 	if sec, err := strconv.Atoi(os.Getenv("PERIOD_SEC")); err == nil {
 		period = time.Duration(sec) * time.Second
 	}
@@ -21,18 +23,24 @@ func main() {
 	rancher := NewRancher(host, token, project)
 	writer := NewTargetWriter(filepath)
 
+	var last []*RancherTarget
 	for {
 		targets, err := rancher.ListAutoPromServices()
 		if err != nil {
 			os.Stderr.WriteString("[ERROR] list rancher error: " + err.Error())
 			sentry.CaptureException(err)
+			time.Sleep(period)
 			continue
 		}
-		err = writer.Write(targets)
-		if err != nil {
-			os.Stderr.WriteString("[ERROR] write file error: " + err.Error())
-			sentry.CaptureException(err)
-			continue
+		if reflect.DeepEqual(last, targets) {
+			log.Println("[INFO] not changed")
+		} else {
+			err = writer.Write(targets)
+			if err != nil {
+				os.Stderr.WriteString("[ERROR] write file error: " + err.Error())
+				sentry.CaptureException(err)
+			}
+			last = targets
 		}
 		time.Sleep(period)
 	}
@@ -40,7 +48,7 @@ func main() {
 
 func initSentry(dsn string) {
 	err := sentry.Init(sentry.ClientOptions{
-		Dsn: dsn,
+		Dsn:   dsn,
 		Debug: true,
 	})
 	if err != nil {

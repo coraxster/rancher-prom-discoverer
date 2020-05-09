@@ -37,11 +37,15 @@ type PromTarget struct {
 }
 
 func rancher2PromTarget(rt *RancherTarget) *PromTarget {
-	rt.Labels["hostname"] = rt.Host
-	rt.Labels["stack"] = rt.Stack
-	rt.Labels["service"] = rt.Service
+	promLabels := make(map[string]string)
+	for k, v := range rt.Labels {
+		promLabels[k] = v
+	}
+	promLabels["hostname"] = rt.Host
+	promLabels["stack"] = rt.Stack
+	promLabels["service"] = rt.Service
 	return &PromTarget{
 		Targets: []string{rt.Target},
-		Labels:  rt.Labels,
+		Labels:  promLabels,
 	}
 }
