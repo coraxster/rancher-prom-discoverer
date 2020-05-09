@@ -35,7 +35,7 @@ services:
     command: ["--config.file=/etc/prometheus/auto/prometheus.yml"]
 
   prom-discoverer:
-    image: registry.exness.io/xdata/rancher-prom-discoverer:0-0-4
+    image: corax/rancher-prom-discoverer
     environment:
       RANCHER_TOKEN: {YOUR-API-TOKEN}
       RANCHER_PROJECT: {YOUR-PROJECT-NAME}
