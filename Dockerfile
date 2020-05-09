@@ -10,4 +10,5 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags " -X main.Version=${VERSION}" -o 
 FROM alpine:edge
 RUN apk add tzdata
 COPY --from=builder /src/app/rpd /rpd
+ADD prometheus.yml /etc/prometheus/auto/prometheus.yml
 ENTRYPOINT ["./rpd"]
